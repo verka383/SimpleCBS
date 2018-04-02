@@ -11,3 +11,9 @@ C:\Users\VSk\OneDrive\MFF UK\MGR\1. ročník\Domácí úkoly\Seminář z umělé
 C:\Users\VSk\OneDrive\MFF UK\MGR\1. ročník\Domácí úkoly\Seminář z umělé inteligence II\CBS\CBS\obj\Debug\CBS.csproj.CoreCompileInputs.cache
 C:\Users\VSk\OneDrive\MFF UK\MGR\1. ročník\Domácí úkoly\Seminář z umělé inteligence II\CBS\CBS\obj\Debug\CBS.exe
 C:\Users\VSk\OneDrive\MFF UK\MGR\1. ročník\Domácí úkoly\Seminář z umělé inteligence II\CBS\CBS\obj\Debug\CBS.pdb
+C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\SimpleCBS\SimpleCBS\CBS\bin\Debug\CBS.exe.config
+C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\SimpleCBS\SimpleCBS\CBS\obj\Debug\CBS.exe
+C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\SimpleCBS\SimpleCBS\CBS\obj\Debug\CBS.pdb
+C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\SimpleCBS\SimpleCBS\CBS\bin\Debug\CBS.exe
+C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\SimpleCBS\SimpleCBS\CBS\bin\Debug\CBS.pdb
+C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\SimpleCBS\SimpleCBS\CBS\obj\Debug\CBS.csprojResolveAssemblyReference.cache
