@@ -11,11 +11,11 @@ namespace CBS
     {
         static void Main(string[] args)
         {
-            new CBS();
+            new CBSSolver(@"C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\testmaps\Test maps\Map 8.txt", "map8");
         }
     }
 
-    class CBS
+    public class CBSSolver
     {
         /// <summary>
         /// Map of the world we are searching in.
@@ -32,14 +32,11 @@ namespace CBS
         /// </summary>
         HashSet<TreeNode> openedNodes = new HashSet<TreeNode>();
 
-        public CBS()
+        public CBSSolver(string input, string output)
         {
-            LoadMap("input2.txt");
-            //List<Constraint> blabla = new List<Constraint>(new[] { new Constraint(agents[0], 6, 2), new Constraint(agents[1], 2, 4) });
-            //Path r = LowLevelSearch(agents[0], blabla);
-            //Path rr = LowLevelSearch(agents[1], blabla);
-            List<Path> result = RunSearch();
-            WriteOutput("output2", result);
+            LoadMap(input);
+            var result = RunSearch();
+            WriteOutput(output, result);
         }
 
         /// <summary>
@@ -48,7 +45,7 @@ namespace CBS
         List<Path> RunSearch()
         {
             HashSet<TreeNode> visitedNodes = new HashSet<TreeNode>();
-            TreeNode root = new TreeNode();
+            var root = new TreeNode();
             root.constraints = new List<Constraint>();
 
             for (int i = 0; i < agents.Length; i++)
@@ -62,22 +59,14 @@ namespace CBS
 
             while (openedNodes.Count > 0)
             {
-
-                Console.WriteLine(openedNodes.Count);
-                TreeNode p = findMinH();
-                if (p.solution[0].ToString().StartsWith("3 3") && p.solution[1].ToString().StartsWith("5 4"))
-                {
-                }
-                /* bool find = p.solution[0].path.Where(x => x.id == 2).Count() > 0;
-                 bool find2 = p.solution[1].path.Where(x => x.id == 2).Count() > 0;
-                 if (find || find2)
-                     break;
-
-             */
+             //   Console.WriteLine(openedNodes.Count);
+                TreeNode p = findMinH();               
+               
                 openedNodes.Remove(p);
                 visitedNodes.Add(p);
 
                 if (p.solution[0].path == null || p.solution[1].path == null) continue;
+
                 // detection of all conflicts
                 List<Conflict> conflicts = new List<Conflict>();
 
@@ -130,7 +119,7 @@ namespace CBS
                                 var paths2 = LowLevelSearchBFS(cc.a2, newConstrains);
                                 foreach (var p1 in paths1)
                                 {
-                                    foreach (var p2 in paths2)
+                                   foreach (var p2 in paths2)   // todo comment out
                                     {
                                         TreeNode newNode = new TreeNode();
                                         newNode.solution = new List<Path>(p.solution);
@@ -139,7 +128,7 @@ namespace CBS
                                         newNode.cost -= (newNode.solution[cc.a1.ID]).GetCost();
                                         newNode.cost -= (newNode.solution[cc.a2.ID]).GetCost();
                                         newNode.solution[cc.a1.ID] = new Path(p1);
-                                        newNode.solution[cc.a2.ID] = new Path(p2);
+                                        newNode.solution[cc.a2.ID] = new Path(p2); // todo comment out
                                         newNode.cost += (newNode.solution[cc.a1.ID]).GetCost();
                                         newNode.cost += (newNode.solution[cc.a2.ID]).GetCost();
                                         if (!visitedNodes.Contains(newNode))
@@ -147,26 +136,7 @@ namespace CBS
                                     }
                                 }
                                
-                            }
-                           /* {
-                                TreeNode newNode = new TreeNode();
-                                newNode.solution = new List<Path>(p.solution);
-                                newNode.constraints = new List<Constraint>(p.constraints);
-                                //newNode.constraints.Add(new Constraint(c.a1, cc.secondID, cc.timeStep));
-                                // lets not allow second robot to stay at its place
-                                newNode.constraints.Add(new Constraint(c.a2, cc.firstID, cc.timeStep));
-                                newNode.constraints.Add(new Constraint(c.a2, cc.secondID, cc.timeStep));
-                                newNode.cost = p.cost;
-                                newNode.cost -= (newNode.solution[cc.a1.ID]).GetCost();
-                                newNode.cost -= (newNode.solution[cc.a2.ID]).GetCost();
-                                
-                                newNode.solution[cc.a1.ID] = new Path(LowLevelSearchBFS(cc.a1, newNode.constraints));
-                                newNode.solution[cc.a2.ID] = new Path(LowLevelSearchBFS(cc.a2, newNode.constraints));
-                                newNode.cost += (newNode.solution[cc.a1.ID]).GetCost();
-                                newNode.cost += (newNode.solution[cc.a2.ID]).GetCost();
-                                if (!visitedNodes.Contains(newNode))
-                                    openedNodes.Add(newNode);
-                            }*/
+                            }                           
                         }
                     }
                 }
@@ -186,9 +156,7 @@ namespace CBS
             {
                 if (p1.path[i].id == p2.path[i+1].id && p2.path[i].id == p1.path[i+1].id)
                 {
-                    conflict.Add(new Crash(a1,a2, p1.path[i].id, p1.path[i + 1].id, i+1));
-                    //conflict.Add(new Crash(a2, p2.path[i].id, p2.path[i + 1].id, i));
-                    //return conflict;
+                    conflict.Add(new Crash(a1,a2, p1.path[i].id, p1.path[i + 1].id, i+1));                    
                 }
             }
 
@@ -197,8 +165,7 @@ namespace CBS
             {
                 if (p1.path[i].id == p2.path[i].id)
                 {
-                    conflict.Add(new Conflict(a1, a2, p1.path[i].id, i));
-                    //return conflict;
+                    conflict.Add(new Conflict(a1, a2, p1.path[i].id, i));                    
                 }
             }
 
@@ -931,7 +898,8 @@ namespace CBS
 
             foreach (Path p in result)
             {
-                StreamWriter sw = new StreamWriter(file + "-" + id + ".txt");
+                var fileName = file + "-" + id + ".txt";
+                StreamWriter sw = new StreamWriter(fileName);
                 //View v = View.detectView(p.path[0], p.path[1]);
                 View v = new RightView();
 

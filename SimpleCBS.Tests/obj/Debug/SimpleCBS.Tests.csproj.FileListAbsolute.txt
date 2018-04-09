@@ -1,0 +1,11 @@
+C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\SimpleCBS\SimpleCBS\SimpleCBS.Tests\bin\Debug\SimpleCBS.Tests.dll
+C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\SimpleCBS\SimpleCBS\SimpleCBS.Tests\bin\Debug\SimpleCBS.Tests.pdb
+C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\SimpleCBS\SimpleCBS\SimpleCBS.Tests\bin\Debug\CBS.exe
+C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\SimpleCBS\SimpleCBS\SimpleCBS.Tests\bin\Debug\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll
+C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\SimpleCBS\SimpleCBS\SimpleCBS.Tests\bin\Debug\CBS.pdb
+C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\SimpleCBS\SimpleCBS\SimpleCBS.Tests\obj\Debug\SimpleCBS.Tests.csprojResolveAssemblyReference.cache
+C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\SimpleCBS\SimpleCBS\SimpleCBS.Tests\obj\Debug\SimpleCBS.Tests.dll
+C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\SimpleCBS\SimpleCBS\SimpleCBS.Tests\obj\Debug\SimpleCBS.Tests.pdb
+C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\SimpleCBS\SimpleCBS\SimpleCBS.Tests\bin\Debug\nunit.framework.dll
+C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\SimpleCBS\SimpleCBS\SimpleCBS.Tests\bin\Debug\nunit.framework.pdb
+C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\SimpleCBS\SimpleCBS\SimpleCBS.Tests\bin\Debug\nunit.framework.xml
