@@ -16,4 +16,3 @@ C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\SimpleCBS\SimpleCBS\CBS\obj
 C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\SimpleCBS\SimpleCBS\CBS\obj\Debug\CBS.pdb
 C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\SimpleCBS\SimpleCBS\CBS\bin\Debug\CBS.exe
 C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\SimpleCBS\SimpleCBS\CBS\bin\Debug\CBS.pdb
-C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\SimpleCBS\SimpleCBS\CBS\obj\Debug\CBS.csprojResolveAssemblyReference.cache
