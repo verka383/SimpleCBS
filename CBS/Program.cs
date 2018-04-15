@@ -11,7 +11,7 @@ namespace CBS
     {
         static void Main(string[] args)
         {
-            new CBSSolver(@"C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\testmaps\Test maps\Map 8.txt", "map8");
+           // new CBSSolver(@"C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\testmaps\Test maps\Map 8.txt", "map8");
         }
     }
 
@@ -32,18 +32,17 @@ namespace CBS
         /// </summary>
         HashSet<TreeNode> openedNodes = new HashSet<TreeNode>();
 
-        public CBSSolver(string input, string output)
+        public CBSSolver(string input)
         {
-            LoadMap(input);
-            var result = RunSearch();
-            if (result.Any(x => x.path == null ||x.path.Count == 0)) throw new Exception("path not found");
-            WriteOutput(output, result);
+            LoadMap(input);           
         }
+
+
 
         /// <summary>
         /// Main search function.
         /// </summary>
-        List<Path> RunSearch()
+        public List<Path> RunSearch()
         {
             HashSet<TreeNode> visitedNodes = new HashSet<TreeNode>();
             var root = new TreeNode();
@@ -225,7 +224,7 @@ namespace CBS
         /// <summary>
         /// Node of the grid (low level).
         /// </summary>
-        class NodeL
+        public class NodeL
         {
             public NodeL(int id, int x, int y)
             {
@@ -269,7 +268,7 @@ namespace CBS
         /// <summary>
         /// Path for agent a found by LowLevelSearch
         /// </summary>
-        class Path
+        public class Path
         {
             public Path(List<NodeL> path)
             {
@@ -859,7 +858,30 @@ namespace CBS
             DIRECTION_LEFT = 2, DIRECTION_RIGHT = 4, DIRECTION_FORWARD = 1, DIRECTION_BACKWARD = 8, WAIT = 0
         }
 
-        void WriteOutput(string file, List<Path> result)
+        public void WriteHumanReadableOutput(string file, List<Path> result)
+        {           
+            //var longest = result.Max(x => x.path.Count);
+            using (var writer = new StreamWriter(file))
+            {
+                //writer.WriteLine("t\t" + string.Join("\t", Enumerable.Range(0,longest)));
+                foreach (var p in result)
+                {
+                    for (int i = 0; i < p.path.Count - 1; i++)
+                    {
+                        var dx = p.path[i].x - p.path[i + 1].x;
+                        var dy = p.path[i].y - p.path[i + 1].y;
+                        if (dx > 0) writer.Write(" < ");
+                        else if (dx < 0) writer.Write(" > ");
+                        else if (dy > 0) writer.Write(" ^ ");
+                        else if (dy < 0) writer.Write(" V ");
+                        else writer.Write(" o ");
+                    }
+                    writer.WriteLine();
+                }
+            }
+        }
+
+        public void WriteOutput(string file, List<Path> result)
         {
             int id = 0;
 

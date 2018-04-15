@@ -4,6 +4,7 @@ using System.IO;
 using System.Diagnostics;
 using NUnit.Framework;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace SimpleCBS.Tests
 {
@@ -21,14 +22,19 @@ namespace SimpleCBS.Tests
         [OneTimeTearDown]
         public void TearDown()
         {
-            Directory.Delete(outputPath);
+            //Directory.Delete(outputPath);
         }
         
         [TestCaseSource("TestSource")]
         public void TestSolution(string file)
         {
             Debug.WriteLine("Solving map:" + file);
-            new CBS.CBSSolver(Path.Combine(inputPath,file), Path.Combine(outputPath, file));
+            var solver = new CBS.CBSSolver(Path.Combine(inputPath,file));
+
+            var result = solver.RunSearch();
+            if (result.Any(x => x.path == null || x.path.Count == 0)) Assert.Fail("path not found");
+            
+            solver.WriteHumanReadableOutput(Path.Combine(outputPath, file), result);
         }
     }
 }
