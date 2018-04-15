@@ -36,6 +36,7 @@ namespace CBS
         {
             LoadMap(input);
             var result = RunSearch();
+            if (result.Any(x => x.path == null ||x.path.Count == 0)) throw new Exception("path not found");
             WriteOutput(output, result);
         }
 
@@ -50,6 +51,7 @@ namespace CBS
 
             for (int i = 0; i < agents.Length; i++)
             {
+                // Path p = new Path(LowLevelSearchBFS(agents[i], root.constraints));
                 Path p = LowLevelSearch(agents[i], root.constraints);
                 root.solution.Add(p);
                 root.cost += p.GetCost();
@@ -68,23 +70,24 @@ namespace CBS
                 if (p.solution[0].path == null || p.solution[1].path == null) continue;
 
                 // detection of all conflicts
-                List<Conflict> conflicts = new List<Conflict>();
+                Conflict conflict = null;
 
                 for (int i = 0; i < p.solution.Count; i++)
                 {
                     for (int j = i + 1; j < p.solution.Count; j++)
                     {
-                        conflicts.AddRange(detectConflicts(agents[i], agents[j], p.solution[i], p.solution[j]));
+                        conflict = detectConflict(agents[i], agents[j], p.solution[i], p.solution[j]);
+                        break;
                     }
                 }
 
-                if (conflicts.Count == 0)
+                if (conflict == null)
                 {
                     return p.solution;
                 }
                 else
                 {
-                    var c = conflicts.First();
+                    var c = conflict;
 
                     foreach (Agent a in new[] { c.a1, c.a2 })
                     {
@@ -93,7 +96,8 @@ namespace CBS
                         newNode.constraints = new List<Constraint>(p.constraints);
                         var newConstrain = new Constraint(a, c.nodeId, c.timeStep);
                         if (newNode.constraints.Contains(newConstrain))
-                            continue;
+                            //visitedNodes.Add(newNode);
+                           continue;
                         newNode.constraints.Add(newConstrain);
                         newNode.cost = p.cost;
                         newNode.cost -= (newNode.solution[a.ID]).GetCost();
@@ -103,57 +107,23 @@ namespace CBS
                         newNode.cost += (newNode.solution[a.ID]).GetCost();
                         if (!visitedNodes.Contains(newNode))
                             openedNodes.Add(newNode);
+                       // visitedNodes.Add(newNode);
                     }
                 }
             }
 
             return null;
-        }
+        }       
 
-        private void ReplanAgent(HashSet<TreeNode> visitedNodes, TreeNode p, Conflict c, Crash cc, Agent a)
+        Conflict detectConflict(Agent a1, Agent a2, Path p1, Path p2)
         {
-            var newConstrains = new List<Constraint>(p.constraints);
-
-            newConstrains.Add(new Constraint(a, cc.secondID, cc.timeStep));
-            // lets not allow second robot to stay at its place
-            // newConstrains.Add(new Constraint(a, cc.secondID, cc.timeStep + 1));
-            //newConstrains.Add(new Constraint(c.a2, cc.firstID, cc.timeStep));
-            //newConstrains.Add(new Constraint(c.a2, cc.secondID, cc.timeStep));
-
-            var paths1 = LowLevelSearchBFS(a, newConstrains);
-
-            foreach (var p1 in paths1)
-            {
-                //foreach (var p2 in paths2)   // todo comment out
-                {
-                    TreeNode newNode = new TreeNode();
-                    newNode.solution = new List<Path>(p.solution);
-                    newNode.constraints = new List<Constraint>(newConstrains);
-                    newNode.cost = p.cost;
-                    newNode.cost -= (newNode.solution[a.ID]).GetCost();
-                    //newNode.cost -= (newNode.solution[cc.a2.ID]).GetCost();
-                    newNode.solution[a.ID] = new Path(p1);
-                    //newNode.solution[cc.a2.ID] = new Path(p2); // todo comment out
-                    newNode.cost += (newNode.solution[a.ID]).GetCost();
-                    //newNode.cost += (newNode.solution[cc.a2.ID]).GetCost();/
-                    visitedNodes.Add(newNode);
-                    openedNodes.Add(newNode);
-                }
-            }
-        }
-
-        List<Conflict> detectConflicts(Agent a1, Agent a2, Path p1, Path p2)
-        {
-            int min = p1.path.Count > p2.path.Count ? p2.path.Count : p1.path.Count;
-            List<Conflict> conflict = new List<Conflict>();
-
-
+            int min = Math.Min(p1.path.Count, p2.path.Count);
             // agents are atempting to switch positions
-            for (int i = 0; i < min - 1; i++)
+            for (int i = 0; i < min-1; i++)
             {
                 if (p1.path[i].id == p2.path[i + 1].id && p2.path[i].id == p1.path[i + 1].id)
                 {
-                    conflict.Add(new Crash(a1, a2, p1.path[i].id, p1.path[i + 1].id, i + 1));
+                   return new Crash(a1, a2, p1.path[i].id, p1.path[i + 1].id, i + 1);
                 }
             }
 
@@ -162,11 +132,11 @@ namespace CBS
             {
                 if (p1.path[i].id == p2.path[i].id)
                 {
-                    conflict.Add(new Conflict(a1, a2, p1.path[i].id, i));
+                    return new Conflict(a1, a2, p1.path[i].id, i);
                 }
             }
 
-            return conflict;
+            return null;
         }
 
         // find node with min cost, prefer node with min constrains
