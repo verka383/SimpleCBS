@@ -47,7 +47,7 @@ namespace SimpleCBS.Tests
                     Assert.That(totalCost == 7); break;
                 case "Map 5": Assert.That(totalCost == 15); break;
                 case "Map 6": Assert.That(totalCost == 4); break;
-                case "Map 7": /*Assert.That(totalCost == );*/ break;
+                case "Map 7": Assert.That(totalCost == 45); break;
                 case "Map 8": Assert.That(totalCost == 8); break;
                 case "Map 9": Assert.That(totalCost == 7); break;
                 case "Map 10": Assert.That(totalCost == 13); break;
