@@ -11,12 +11,15 @@ namespace CBS
     {
         static void Main(string[] args)
         {
-            new CBS();
+            var solver = new CBSSolver(@"C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\vera_test.txt", new AStarSearch());
+            var path = solver.RunSearch();
+            solver.WriteOutput("vera_test output", path);
         }
     }
 
-    class CBS
+    public class CBSSolver
     {
+        ILowLevelSearch lowLevelSearch;
         /// <summary>
         /// Map of the world we are searching in.
         /// </summary>
@@ -32,27 +35,27 @@ namespace CBS
         /// </summary>
         HashSet<TreeNode> openedNodes = new HashSet<TreeNode>();
 
-        public CBS()
+        public CBSSolver(string input, ILowLevelSearch lowLevelSearch)
         {
-            LoadMap("input2.txt");
-            //List<Constraint> blabla = new List<Constraint>(new[] { new Constraint(agents[0], 6, 2), new Constraint(agents[1], 2, 4) });
-            //Path r = LowLevelSearch(agents[0], blabla);
-            //Path rr = LowLevelSearch(agents[1], blabla);
-            List<Path> result = RunSearch();
-            WriteOutput("dvojka", result);
+            this.lowLevelSearch = lowLevelSearch;
+            LoadMap(input);           
         }
+
+
 
         /// <summary>
         /// Main search function.
         /// </summary>
-        List<Path> RunSearch()
+        public List<Path> RunSearch()
         {
-            TreeNode root = new TreeNode();
+            HashSet<TreeNode> visitedNodes = new HashSet<TreeNode>();
+            var root = new TreeNode();
             root.constraints = new List<Constraint>();
 
             for (int i = 0; i < agents.Length; i++)
             {
-                Path p = LowLevelSearch(agents[i], root.constraints);
+                // Path p = new Path(LowLevelSearchBFS(agents[i], root.constraints));
+                Path p = lowLevelSearch.LowLevelSearch(agents[i], root.constraints);
                 root.solution.Add(p);
                 root.cost += p.GetCost();
             }
@@ -61,94 +64,99 @@ namespace CBS
 
             while (openedNodes.Count > 0)
             {
+                //   Console.WriteLine(openedNodes.Count);
                 TreeNode p = findMinH();
+
                 openedNodes.Remove(p);
+                visitedNodes.Add(p);
+
+                if (p.solution[0].path == null || p.solution[1].path == null)
+                    continue;
 
                 // detection of all conflicts
-                List<Conflict> conflicts = new List<Conflict>();
+                Conflict conflict = null;
 
                 for (int i = 0; i < p.solution.Count; i++)
                 {
-                    for (int j = i+1; j < p.solution.Count; j++)
+                    if (conflict != null) break;
+                    for (int j = i + 1; j < p.solution.Count; j++)
                     {
-                        conflicts.AddRange(detectConflicts(agents[i], agents[j], p.solution[i], p.solution[j]));
+                        conflict = detectConflict(agents[i], agents[j], p.solution[i], p.solution[j]);                        
+                        if(conflict!=null)break;
                     }
                 }
 
-                if (conflicts.Count == 0)
+                if (conflict == null)
                 {
                     return p.solution;
                 }
                 else
                 {
-                    foreach (Conflict c in conflicts)
+                    var c = conflict;
+
+                    foreach (Agent a in new[] { c.a1, c.a2 })
                     {
-                        if (typeof(Crash) != c.GetType())
+                        TreeNode newNode = new TreeNode();
+                        newNode.solution = new List<Path>(p.solution);
+                        newNode.constraints = new List<Constraint>(p.constraints);
+                        var newConstrain = new Constraint(a, c.nodeId, c.timeStep);
+                        if (newNode.constraints.Contains(newConstrain))
+                            //visitedNodes.Add(newNode);
+                           continue;
+                        newNode.constraints.Add(newConstrain);
+                        newNode.cost = p.cost;
+                        newNode.cost -= (newNode.solution[a.ID]).GetCost();
+                        // var paths = LowLevelSearchBFS(a, newNode.constraints);
+                        // if (paths.Count == 0) continue;
+                        //  newNode.solution[a.ID] = new Path(paths[0]);
+                        var path = lowLevelSearch.LowLevelSearch(a, newNode.constraints);
+                        if (path == null)
                         {
-                            foreach (Agent a in new[] { c.a1, c.a2 })
-                            {
-                                TreeNode newNode = new TreeNode();
-                                newNode.solution = new List<Path>(p.solution);
-                                newNode.constraints = new List<Constraint>(p.constraints);
-                                newNode.constraints.Add(new Constraint(a, c.nodeId, c.timeStep));
-                                newNode.cost = p.cost;
-                                newNode.cost -= (newNode.solution[a.ID]).GetCost();
-                                newNode.solution[a.ID] = LowLevelSearch(a, newNode.constraints);
-                                newNode.cost += (newNode.solution[a.ID]).GetCost();
-                                openedNodes.Add(newNode);
-                            }
+                            //visitedNodes.Add(newNode);
+                            
+                            continue;
                         }
-                        else
-                        {
-                            Crash cc = (Crash)c;
-                            TreeNode newNode = new TreeNode();
-                            newNode.solution = new List<Path>(p.solution);
-                            newNode.constraints = new List<Constraint>(p.constraints);
-                            newNode.constraints.Add(new Constraint(cc.a, cc.firstID, cc.timeStep));
-                            newNode.constraints.Add(new Constraint(cc.a, cc.secondID, cc.timeStep + 1));
-                            newNode.cost = p.cost;
-                            newNode.cost -= (newNode.solution[cc.a.ID]).GetCost();
-                            newNode.solution[cc.a.ID] = LowLevelSearch(cc.a, newNode.constraints);
-                            newNode.cost += (newNode.solution[cc.a.ID]).GetCost();
+                        newNode.solution[a.ID] = path;
+                        newNode.cost += (newNode.solution[a.ID]).GetCost();
+                        if (!visitedNodes.Contains(newNode))
                             openedNodes.Add(newNode);
-                        }
+                       // visitedNodes.Add(newNode);
                     }
+                }
+            }
+
+            return null;
+        }       
+
+        Conflict detectConflict(Agent a1, Agent a2, Path p1, Path p2)
+        {
+            int min = Math.Min(p1.path.Count, p2.path.Count);
+            // agents are atempting to switch positions
+            for (int i = 0; i < min-1; i++)
+            {
+                if (p1.path[i].id == p2.path[i + 1].id && p2.path[i].id == p1.path[i + 1].id)
+                {
+                   return new Crash(a1, a2, p1.path[i].id, p1.path[i + 1].id, i + 1);
+                }
+            }
+
+
+            for (int i = 0; i < min; i++)
+            {
+                if (p1.path[i].id == p2.path[i].id)
+                {
+                    return new Conflict(a1, a2, p1.path[i].id, i);
                 }
             }
 
             return null;
         }
 
-        List<Conflict> detectConflicts(Agent a1, Agent a2, Path p1, Path p2)
-        {
-            int min = p1.path.Count > p2.path.Count ? p2.path.Count : p1.path.Count;
-            List<Conflict> conflict = new List<Conflict>();
-
-            for (int i = 0; i < min; i++)
-            {
-                if (p1.path[i].id == p2.path[i].id)
-                {
-                    conflict.Add(new Conflict(a1, a2, p1.path[i].id, i));
-                    return conflict;
-                }
-            }
-
-            /*for (int i = 0; i < min - 1; i++)
-            {
-                if (p1.path[i].id == p2.path[i+1].id && p2.path[i].id == p1.path[i+1].id)
-                {
-                    conflict.Add(new Crash(a1, p1.path[i].id, p1.path[i + 1].id, i));
-                    conflict.Add(new Crash(a2, p2.path[i].id, p2.path[i + 1].id, i));
-                    return conflict;
-                }
-            }*/
-
-            return conflict;
-        }
-
+        // find node with min cost, prefer node with min constrains
         TreeNode findMinH()
         {
             int min = int.MaxValue;
+            int minConstrains = int.MaxValue;
             TreeNode minIndex = null;
 
             foreach (TreeNode n in openedNodes)
@@ -156,9 +164,16 @@ namespace CBS
                 if (n.cost < min)
                 {
                     min = n.cost;
+                    minConstrains = n.constraints.Count;
                     minIndex = n;
                 }
+                if (n.cost == min && n.constraints.Count < minConstrains)
+                {
+                    minIndex = n;
+                    minConstrains = n.constraints.Count;
+                }
             }
+
 
             return minIndex;
         }
@@ -179,7 +194,7 @@ namespace CBS
             // for simplicity: initialize all fields of the grid - if any field is not available, than it will have no neighbours and it is unreachable
             for (int i = 0; i < size; i++)
             {
-                    grid[i] = new NodeL(i, i/width, i%width);
+                grid[i] = new NodeL(i, i % width, i / width);
             }
 
             // add to all nodes their neighbours
@@ -194,7 +209,7 @@ namespace CBS
             // creates all agents
             List<Agent> agents = new List<Agent>();
 
-            while((line = sr.ReadLine()) != null)
+            while ((line = sr.ReadLine()) != null)
             {
                 int start, goal;
                 parseLine(line, out start, out goal);
@@ -218,219 +233,24 @@ namespace CBS
             second = int.Parse(splitted[1]);
         }
 
-#region LowLevel
+        #region LowLevel
 
-        /// <summary>
-        /// Node of the grid (low level).
-        /// </summary>
-        class NodeL
-        {
-            public NodeL(int id, int x, int y)
-            {
-                this.id = id;
-                this.x = x;
-                this.y = y;
-                this.neighbours = new List<NodeL>();
-            }
 
-            public int id;
-            public int x;
-            public int y;
-            public List<NodeL> neighbours;
-        }
+       
+
         
-        /// <summary>
-        /// Agent represented by id.
-        /// Holds its start and goal position as NodeL.
-        /// </summary>
-        class Agent
-        {
-            public Agent(int id, NodeL start, NodeL goal)
-            {
-                this.ID = id;
-                this.start = start;
-                this.goal = goal;
-            }
-
-            public int ID;
-            public NodeL start;
-            public NodeL goal;
-        }
-
-        /// <summary>
-        /// Path for agent a found by LowLevelSearch
-        /// </summary>
-        class Path
-        {
-            public Path()
-            {
-                this.path = new List<NodeL>();
-            }
-
-            public int GetCost()
-            {
-                return this.path.Count();
-            }
-
-            //Agent a;
-            public List<NodeL> path;
-            //public int cost;
-        }
-
-        /// <summary>
-        /// Searches path in grid for agent a.
-        /// </summary>
-        /// <param name="a"></param>
-        /// <returns></returns>
-        Path LowLevelSearch(Agent a, List<Constraint> cs)
-        {
-            // counter of time steps
-            int time = -1;
-
-            // closed nodes
-            HashSet<NodeL> closed = new HashSet<NodeL>();
-
-            // opened nodes
-            HashSet<NodeL> opened = new HashSet<NodeL>();
-            opened.Add(a.start);
-
-            // key node can be reached from value node the most efficiently (most efficient previous step)
-            Dictionary<NodeL, NodeL> cameFrom = new Dictionary<NodeL, NodeL>();
-
-            // for each node, the cost of getting from the start node to that node
-            Dictionary<NodeL, int> gScore = new Dictionary<NodeL, int>();
-            gScore.Add(a.start, 0);
-
-            // for each node, total cost of getting from start to goal through that node
-            // consists of gScore and heuristic estimate
-            Dictionary<NodeL, int> fScore = new Dictionary<NodeL, int>();
-            fScore.Add(a.start, heuristic(a.start, a.goal));
-
-            // main loop
-            while(opened.Count > 0)
-            {
-                time++; 
-
-                NodeL current = findMin(fScore, opened);
-
-                if (current.id == a.goal.id)
-                {
-                    return recontructPath(cameFrom, a.goal, cs, a.ID);
-                }
-
-                opened.Remove(current);
-                closed.Add(current);
-                bool allConstraintsOK = true;
-
-                // go through all neighbours of the current node
-                foreach (NodeL neighbour in current.neighbours)
-                {
-                    // control if it is not closed
-                    if (closed.Contains(neighbour))
-                    {
-                        continue;
-                    }
-
-                    bool isOK = true;
-
-                    // control if there is not conflict with constraints
-                    foreach (Constraint c in cs)
-                    {
-                        if (c.a == a && c.timeStep == time && c.nodeId == neighbour.id)
-                        {
-                            isOK = false;
-                            allConstraintsOK = false;
-                        }
-                    }
-
-                    if (!isOK)
-                    {
-                        continue;
-                    }
-
-                    // add node to opened
-                    if (!opened.Contains(neighbour))
-                    {
-                        opened.Add(neighbour);
-                    }
-
-                    // recomputation
-                    int tentative_gScore = gScore[current] + 1;
-
-                    if (gScore.ContainsKey(neighbour) && tentative_gScore >= gScore[neighbour])
-                    {
-                        continue;
-                    }
-                    else // found better past - record it
-                    {
-                        // refresh cameFrom
-                        if (cameFrom.ContainsKey(neighbour))
-                        {
-                            cameFrom[neighbour] = current;
-                        }
-                        else
-                        {
-                            cameFrom.Add(neighbour, current);
-                        }
-
-                        // refresh gScore
-                        if (gScore.ContainsKey(neighbour))
-                        {
-                            gScore[neighbour] = tentative_gScore;
-                        }
-                        else
-                        {
-                            gScore.Add(neighbour, tentative_gScore);
-                        }
-
-                        // refresh fScore
-                        if (fScore.ContainsKey(neighbour))
-                        {
-                            fScore[neighbour] = gScore[neighbour] + heuristic(neighbour, a.goal);
-                        }
-                        else
-                        {
-                            fScore.Add(neighbour, gScore[neighbour] + heuristic(neighbour, a.goal));
-                        }
-                    }
-
-                }
-
-                if (!allConstraintsOK)
-                {
-                    closed.Remove(current);
-                    opened.Add(current);
-                    gScore[current]++;
-                    fScore[current]++;
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Heuristic function - count Manhattan metrics between given nodes.
-        /// </summary>
-        /// <param name="n"></param>
-        /// <param name="goal"></param>
-        /// <returns></returns>
-        int heuristic(NodeL n, NodeL goal)
-        {
-            return Math.Abs(n.x - goal.x) + Math.Abs(n.y - goal.y);
-        }
-
         /// <summary>
         /// Reconstructs found path.
         /// </summary>
         /// <param name="cameFrom"></param>
         /// <param name="current"></param>
         /// <returns></returns>
-        Path recontructPath(Dictionary<NodeL, NodeL> cameFrom, NodeL current, List<Constraint> c, int id)
+        Path recontructPath(Dictionary<NodeL, NodeL> cameFrom, NodeL current, /*List<Constraint> c,*/ int id)
         {
             Path p = new Path();
             p.path.Add(current);
 
-            while(cameFrom.ContainsKey(current))
+            while (cameFrom.ContainsKey(current))
             {
                 current = cameFrom[current];
                 p.path.Add(current);
@@ -438,98 +258,28 @@ namespace CBS
 
             p.path.Reverse();
 
-            for (int i = 0; i < p.path.Count; i++)
+            /*for (int i = 0; i < p.path.Count; i++)
             {
                 if (c.Find(item => item.a.ID == id && item.timeStep == i && item.nodeId == p.path[i].id) != null)
                 {
-                    p.path.Insert(i, p.path[i-1]);
+                    p.path.Insert(i, p.path[i - 1]);
                     i++;
                 }
-            }
+            }*/
 
             return p;
         }
 
-        /// <summary>
-        /// Finds node in opened with the lowest fScore value.
-        /// </summary>
-        /// <param name="fScore"></param>
-        /// <param name="opened"></param>
-        /// <returns></returns>
-        NodeL findMin(Dictionary<NodeL, int> fScore, HashSet<NodeL> opened)
-        {
-            int min = int.MaxValue;
-            NodeL minIndex = null;
+     
 
-            foreach (NodeL n in fScore.Keys)
-            {
-                if (opened.Contains(n) && fScore[n] < min)
-                {
-                    min = fScore[n];
-                    minIndex = n;
-                }
-            }
-
-            return minIndex;
-        }
-
-#endregion
+        #endregion
         /////////////////////////////////////////////
-
-        /// <summary>
-        /// Constraint that agent a can not be at node with nodeId at given timestep.
-        /// </summary>
-        class Constraint
-        {
-            public Constraint(Agent a, int id, int time)
-            {
-                this.a = a;
-                this.nodeId = id;
-                this.timeStep = time;
-            }
-            public Agent a;
-            public int nodeId;
-            public int timeStep;
-        }
-
-        /// <summary>
-        /// Agents a1 and a2 have conflict at nodeId at given timestep.
-        /// </summary>
-        class Conflict
-        {
-            public Conflict(Agent a1, Agent a2, int id, int time)
-            {
-                this.a1 = a1;
-                this.a2 = a2;
-                this.nodeId = id;
-                this.timeStep = time;
-            }
-
-            public Agent a1;
-            public Agent a2;
-            public int nodeId;
-            public int timeStep;
-        }
-
-        class Crash : Conflict
-        {
-            public Crash(Agent a, int f, int s, int t): base(a, null, s, t)
-            {
-                this.a = a;
-                this.firstID = f;
-                this.secondID = s;
-                this.timeStep = t;
-            }
-
-            public Agent a;
-            public int firstID;
-            public int secondID;
-        }
+    
 
         /// <summary>
         /// Node of the Constraint Tree.
         /// </summary>
-        class TreeNode
+        class TreeNode : IEquatable<TreeNode>
         {
             public TreeNode()
             {
@@ -540,6 +290,30 @@ namespace CBS
             public List<Constraint> constraints;
             public List<Path> solution;
             public int cost;
+
+            public override int GetHashCode()
+            {
+                return string.Join("",constraints.Distinct().Select(x => x.ToString())).GetHashCode(); // cost.GetHashCode() + (solution[0].ToString() + solution[1].ToString()).GetHashCode();
+            }
+
+            bool ConstrainsEqual(List<Constraint> a, List<Constraint> b)
+            {
+                if (a.Count != b.Count) return false;
+                for (int i = 0; i < a.Count; i++)
+                {
+                    if (a[i].a != b[i].a) return false;
+                    if (a[i].nodeId != b[i].nodeId) return false;
+                    if (a[i].timeStep != b[i].timeStep) return false;
+                }
+                return true;
+            }
+            public bool Equals(TreeNode other)
+            {
+                return other.cost == this.cost
+                    && other.solution[0].ToString() == this.solution[0].ToString()
+                    && other.solution[1].ToString() == this.solution[1].ToString()
+                    && ConstrainsEqual(other.constraints, this.constraints);
+            }
         }
 
         /// <summary>
@@ -581,8 +355,8 @@ namespace CBS
         {
             public override DIRECTION translateMove(NodeL from, NodeL to, ref View v)
             {
-                int first = to.x - from.x;
-                int second = to.y - from.y;
+                int second = to.x - from.x;
+                int first = to.y - from.y;
 
                 if (first > 0) // dolu
                 {
@@ -600,7 +374,7 @@ namespace CBS
                     return DIRECTION.DIRECTION_BACKWARD;
                 }
                 else if (second < 0) // doleva
-                {                   
+                {
                     return DIRECTION.DIRECTION_FORWARD;
                 }
                 else
@@ -614,8 +388,8 @@ namespace CBS
         {
             public override DIRECTION translateMove(NodeL from, NodeL to, ref View v)
             {
-                int first = to.x - from.x;
-                int second = to.y - from.y;
+                int second = to.x - from.x;
+                int first = to.y - from.y;
 
                 if (first > 0) // dolu
                 {
@@ -628,7 +402,7 @@ namespace CBS
                     return DIRECTION.DIRECTION_LEFT;
                 }
                 else if (second > 0) // doprava
-                {                   
+                {
                     return DIRECTION.DIRECTION_FORWARD;
                 }
                 else if (second < 0) // doleva
@@ -647,8 +421,8 @@ namespace CBS
         {
             public override DIRECTION translateMove(NodeL from, NodeL to, ref View v)
             {
-                int first = to.x - from.x;
-                int second = to.y - from.y;
+                int second = to.x - from.x;
+                int first = to.y - from.y;
 
                 if (first > 0) // dolu
                 {
@@ -656,7 +430,7 @@ namespace CBS
                     return DIRECTION.DIRECTION_BACKWARD;
                 }
                 else if (first < 0) // nahoru
-                {      
+                {
                     return DIRECTION.DIRECTION_FORWARD;
                 }
                 else if (second > 0) // doprava
@@ -680,8 +454,8 @@ namespace CBS
         {
             public override DIRECTION translateMove(NodeL from, NodeL to, ref View v)
             {
-                int first = to.x - from.x;
-                int second = to.y - from.y;
+                int second = to.x - from.x;
+                int first = to.y - from.y;
 
                 if (first > 0) // dolu
                 {
@@ -715,13 +489,37 @@ namespace CBS
             DIRECTION_LEFT = 2, DIRECTION_RIGHT = 4, DIRECTION_FORWARD = 1, DIRECTION_BACKWARD = 8, WAIT = 0
         }
 
-        void WriteOutput(string file, List<Path> result)
+        public void WriteHumanReadableOutput(string file, List<Path> result)
+        {           
+            //var longest = result.Max(x => x.path.Count);
+            using (var writer = new StreamWriter(file))
+            {
+                //writer.WriteLine("t\t" + string.Join("\t", Enumerable.Range(0,longest)));
+                foreach (var p in result)
+                {
+                    for (int i = 0; i < p.path.Count - 1; i++)
+                    {
+                        var dx = p.path[i].x - p.path[i + 1].x;
+                        var dy = p.path[i].y - p.path[i + 1].y;
+                        if (dx > 0) writer.Write(" < ");
+                        else if (dx < 0) writer.Write(" > ");
+                        else if (dy > 0) writer.Write(" ^ ");
+                        else if (dy < 0) writer.Write(" V ");
+                        else writer.Write(" o ");
+                    }
+                    writer.WriteLine();
+                }
+            }
+        }
+
+        public void WriteOutput(string file, List<Path> result)
         {
             int id = 0;
 
             foreach (Path p in result)
             {
-                StreamWriter sw = new StreamWriter(file + "-" + id + ".txt");
+                var fileName = file + "-" + id + ".txt";
+                StreamWriter sw = new StreamWriter(fileName);
                 //View v = View.detectView(p.path[0], p.path[1]);
                 View v = new RightView();
 
@@ -734,5 +532,79 @@ namespace CBS
                 id++;
             }
         }
+    }
+
+    /// <summary>
+    /// Constraint that agent a can not be at node with nodeId at given timestep.
+    /// </summary>
+    public class Constraint : IEquatable<Constraint>
+    {
+        public Constraint(Agent a, int id, int time)
+        {
+            this.a = a;
+            this.nodeId = id;
+            this.timeStep = time;
+        }
+        public Agent a;
+        public int nodeId;
+        public int timeStep;
+
+        public bool Equals(Constraint other)
+        {
+            if (a.ID != other.a.ID) return false;
+            if (this.nodeId != other.nodeId) return false;
+            if (this.timeStep != other.timeStep) return false;
+            return true;
+        }
+
+        public override bool Equals(object obj)
+        {
+            var other = obj as Constraint;
+            if (other == null) return false;
+            return Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            return a.GetHashCode() * (timeStep + 1) * (nodeId + 1);
+        }
+        public override string ToString()
+        {
+            return string.Format("Agent {0} time {1} cant go to {2}", a.ID, timeStep, nodeId);
+        }
+    }
+
+    /// <summary>
+    /// Agents a1 and a2 have conflict at nodeId at given timestep.
+    /// </summary>
+    public class Conflict
+    {
+        public Conflict(Agent a1, Agent a2, int id, int time)
+        {
+            this.a1 = a1;
+            this.a2 = a2;
+            this.nodeId = id;
+            this.timeStep = time;
+        }
+
+        public Agent a1;
+        public Agent a2;
+        public int nodeId;
+        public int timeStep;
+    }
+
+    public class Crash : Conflict
+    {
+        public Crash(Agent a, Agent b, int f, int s, int t) : base(a, b, s, t)
+        {
+            //this.a = a;
+            this.firstID = f;
+            this.secondID = s;
+            this.timeStep = t;
+        }
+
+        //public Agent a;
+        public int firstID;
+        public int secondID;
     }
 }
