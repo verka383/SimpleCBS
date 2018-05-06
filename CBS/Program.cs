@@ -355,8 +355,8 @@ namespace CBS
         {
             public override DIRECTION translateMove(NodeL from, NodeL to, ref View v)
             {
-                int first = to.x - from.x;
-                int second = to.y - from.y;
+                int second = to.x - from.x;
+                int first = to.y - from.y;
 
                 if (first > 0) // dolu
                 {
@@ -388,8 +388,8 @@ namespace CBS
         {
             public override DIRECTION translateMove(NodeL from, NodeL to, ref View v)
             {
-                int first = to.x - from.x;
-                int second = to.y - from.y;
+                int second = to.x - from.x;
+                int first = to.y - from.y;
 
                 if (first > 0) // dolu
                 {
@@ -421,8 +421,8 @@ namespace CBS
         {
             public override DIRECTION translateMove(NodeL from, NodeL to, ref View v)
             {
-                int first = to.x - from.x;
-                int second = to.y - from.y;
+                int second = to.x - from.x;
+                int first = to.y - from.y;
 
                 if (first > 0) // dolu
                 {
@@ -454,8 +454,8 @@ namespace CBS
         {
             public override DIRECTION translateMove(NodeL from, NodeL to, ref View v)
             {
-                int first = to.x - from.x;
-                int second = to.y - from.y;
+                int second = to.x - from.x;
+                int first = to.y - from.y;
 
                 if (first > 0) // dolu
                 {
