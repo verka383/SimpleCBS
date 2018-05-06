@@ -11,7 +11,9 @@ namespace CBS
     {
         static void Main(string[] args)
         {
-           // new CBSSolver(@"C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\testmaps\Test maps\Map 8.txt", "map8");
+            var solver = new CBSSolver(@"C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\vera_test.txt", new AStarSearch());
+            var path = solver.RunSearch();
+            solver.WriteOutput("vera_test output", path);
         }
     }
 
@@ -76,10 +78,11 @@ namespace CBS
 
                 for (int i = 0; i < p.solution.Count; i++)
                 {
+                    if (conflict != null) break;
                     for (int j = i + 1; j < p.solution.Count; j++)
                     {
-                        conflict = detectConflict(agents[i], agents[j], p.solution[i], p.solution[j]);
-                        break;
+                        conflict = detectConflict(agents[i], agents[j], p.solution[i], p.solution[j]);                        
+                        if(conflict!=null)break;
                     }
                 }
 
