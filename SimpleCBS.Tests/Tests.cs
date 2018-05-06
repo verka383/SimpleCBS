@@ -12,12 +12,28 @@ namespace SimpleCBS.Tests
     [TestFixture]
     public class Tests
     {
-        readonly string outputPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(typeof(Tests).Assembly.Location),@"..\..\TestCases\Output\");
-        static readonly string inputPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(typeof(Tests).Assembly.Location),@"..\..\TestCases\");
+        readonly string outputPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(typeof(Tests).Assembly.Location), @"..\..\TestCases\Output\");
+        static readonly string inputPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(typeof(Tests).Assembly.Location), @"..\..\TestCases\");
 
-        static string[] TestSource()
+        static IEnumerable<TestConfiguration> TestSource()
         {
-            return Directory.GetFiles(inputPath, "*.txt").Select(x=> System.IO.Path.GetFileName(x)).ToArray();
+            var result = Directory.GetFiles(inputPath, "*.txt").Select(x => new TestConfiguration { file = System.IO.Path.GetFileName(x), k = 0 })
+                .Concat(Directory.GetFiles(inputPath, "*.txt").Select(x => new TestConfiguration { file = System.IO.Path.GetFileName(x), k = 1 }))
+                .ToArray();
+            int[] sizes = new int[] { 19, 17, 19, 7, 15, 4, 46, 8, 7, 13, 14, 12, 6, 10, // k=0
+                                      20, 18, 20, 7, 15, 4, 47, 8, 7, 13, 15, 12, 6, 11 }; // k=1
+            for (int i = 0; i < result.Length; i++) result[i].solutionSize = sizes[i];
+            return result;
+        }
+
+        public struct  TestConfiguration {
+            public string file;
+            public int k;
+            public int solutionSize;
+            public override string ToString()
+            {
+                return string.Format("file={0}, k={1}, solution={2}",file,k,solutionSize);
+            }
         }
 
         [OneTimeTearDown]
@@ -27,39 +43,19 @@ namespace SimpleCBS.Tests
         }
         
         [TestCaseSource("TestSource")]
-        public void TestSolution(string file)
+        public void TestSolution(TestConfiguration config)
         {
-            Debug.WriteLine("Solving map:" + file);
-            var solver = new CBS.CBSSolver(System.IO.Path.Combine(inputPath,file), new AStarSearch());
+            Debug.WriteLine("Solving map:" + config.file);
+            var solver = new CBS.CBSSolver(System.IO.Path.Combine(inputPath,config.file), new AStarSearch());
 
-            var result = solver.RunSearch();
+            var result = solver.RunSearch(config.k);
             if (result == null || result.Any(x => x.path == null || x.path.Count == 0))
                 Assert.Fail("path not found");
 
             var totalCost = result.Sum(x => x.path.Count)-2;// start doesnt count
+            Assert.That(totalCost == config.solutionSize, "Expected solution of size {0} but got {1}", config.solutionSize, totalCost);           
 
-            switch (System.IO.Path.GetFileNameWithoutExtension(file))
-            {
-                case "Map 1": Assert.That(totalCost == 19);break;
-                case "Map 2": Assert.That(totalCost == 17); break;
-                case "Map 3": Assert.That(totalCost == 19); break;
-                case "Map 4":
-                    Assert.That(totalCost == 7); break;
-                case "Map 5": Assert.That(totalCost == 15); break;
-                case "Map 6": Assert.That(totalCost == 4); break;
-                case "Map 7": Assert.That(totalCost == 45); break;
-                case "Map 8": Assert.That(totalCost == 8); break;
-                case "Map 9": Assert.That(totalCost == 7); break;
-                case "Map 10": Assert.That(totalCost == 13); break;
-                //case "Map 11": Assert.That(totalCost == ); break;
-                case "Map 12": Assert.That(totalCost == 14); break;
-                case "Map 13": Assert.That(totalCost == 12); break;
-                case "Map 14": Assert.That(totalCost == 6); break;
-                case "Map 15": Assert.That(totalCost == 10); break;
-                default: Assert.Fail("unknown file");break;
-            }
-
-            solver.WriteHumanReadableOutput(System.IO.Path.Combine(outputPath, file), result);
+            solver.WriteHumanReadableOutput(System.IO.Path.Combine(outputPath, config.file), result);
         }
     }
 }
