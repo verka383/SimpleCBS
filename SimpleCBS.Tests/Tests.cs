@@ -19,9 +19,11 @@ namespace SimpleCBS.Tests
         {
             var result = Directory.GetFiles(inputPath, "*.txt").Select(x => new TestConfiguration { file = System.IO.Path.GetFileName(x), k = 0 })
                 .Concat(Directory.GetFiles(inputPath, "*.txt").Select(x => new TestConfiguration { file = System.IO.Path.GetFileName(x), k = 1 }))
+                .Concat(Directory.GetFiles(inputPath, "*.txt").Select(x => new TestConfiguration { file = System.IO.Path.GetFileName(x), k = 5 }))
                 .ToArray();
             int[] sizes = new int[] { 19, 17, 19, 7, 15, 4, 46, 8, 7, 13, 14, 12, 6, 10, // k=0
-                                      20, 18, 20, 7, 15, 4, 47, 8, 7, 13, 15, 12, 6, 11 }; // k=1
+                                      20, 18, 20, 7, 15, 4, 47, 8, 7, 13, 15, 12, 6, 11,
+                                      23, 19, 23, 9, 15, 4, 51, 8, 7, 13, 17, 12, 6, 11}; // k=5
             for (int i = 0; i < result.Length; i++) result[i].solutionSize = sizes[i];
             return result;
         }
@@ -55,7 +57,8 @@ namespace SimpleCBS.Tests
             var totalCost = result.Sum(x => x.path.Count)-2;// start doesnt count
             Assert.That(totalCost == config.solutionSize, "Expected solution of size {0} but got {1}", config.solutionSize, totalCost);           
 
-            solver.WriteHumanReadableOutput(System.IO.Path.Combine(outputPath, config.file), result);
+            solver.WriteHumanReadableOutput(System.IO.Path.Combine(outputPath, 
+                string.Format("{0}_{1}_{2}.txt",System.IO.Path.GetFileNameWithoutExtension(config.file),config.k,config.solutionSize)), result);
         }
     }
 }

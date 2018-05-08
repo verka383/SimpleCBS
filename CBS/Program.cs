@@ -11,9 +11,16 @@ namespace CBS
     {
         static void Main(string[] args)
         {
-            var solver = new CBSSolver(@"C:\Users\noha\Documents\BioinformatikaMgr\AI Semniar\vera_test.txt", new AStarSearch());
+            if (args.Length != 2)
+            {
+                Console.WriteLine("usage: CBS.exe input_path output_pattern");
+                return;
+            }
+            var input = args[0];
+            var output = args[1];
+            var solver = new CBSSolver(input, new AStarSearch());
             var path = solver.RunSearch();
-            solver.WriteOutput("vera_test output", path);
+            solver.WriteOutput(output, path);
         }
     }
 
@@ -127,21 +134,17 @@ namespace CBS
         Conflict detectConflict(Agent a1, Agent a2, Path p1, Path p2, int k)
         {
             int min = Math.Min(p1.path.Count, p2.path.Count);
-
-            // agents are atempting to switch positions
-            for (int i = 0; i < min - 1; i++)
-            {
-                if (p1.path[i].id == p2.path[i + 1].id && p2.path[i].id == p1.path[i + 1].id)
-                {
-                    return new Crash(a1, a2, p1.path[i].id, p1.path[i + 1].id, i + 1);
-                }
-            }
-
-            // agents occupy same position in t+[0,k] time steps            
+                                
             for (int delta = 0; delta <= k; delta++)
-            {              
+            {                            
                 for (int i = 0; i < min-delta; i++)
                 {
+                    // agents are atempting to switch positions  
+                    if (i< min-delta-1 && (p1.path[i].id == p2.path[i + delta + 1].id && p2.path[i].id == p1.path[i + delta + 1].id))
+                    {
+                        return new Conflict(a1, a2, p1.path[i + delta + 1].id, i + delta + 1, delta);
+                    }
+                    // agents occupy same position in t+[0,k] time steps    
                     if (p1.path[i].id == p2.path[i+delta].id)
                     {
                         return new Conflict(a1, a2, p1.path[i].id, i,delta);
@@ -542,7 +545,7 @@ namespace CBS
             this.a2 = a2;
             this.nodeId = id;
             this.timeStep = time;
-            this.delta = delta;
+            this.delta = delta; //for k-robust
         }
 
         public Agent a1;
@@ -550,20 +553,5 @@ namespace CBS
         public int nodeId;
         public int timeStep;
         public int delta;
-    }
-
-    public class Crash : Conflict
-    {
-        public Crash(Agent a, Agent b, int f, int s, int t) : base(a, b, s, t)
-        {
-            //this.a = a;
-            this.firstID = f;
-            this.secondID = s;
-            this.timeStep = t;
-        }
-
-        //public Agent a;
-        public int firstID;
-        public int secondID;
-    }
+    }   
 }
